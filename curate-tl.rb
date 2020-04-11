@@ -163,7 +163,6 @@ def unlike_all(user, archive_path, deleted_ids, chunk_size)
 
     break if likes.empty?
 
-    i = 0
     likes.each_with_index do |tweet, i|
       txt = tweet['text'] || tweet['fullText']
       id = tweet['id_str'] || tweet['tweetId']
@@ -178,14 +177,14 @@ def unlike_all(user, archive_path, deleted_ids, chunk_size)
 
       setup_next_progress_draw
 
-      i += 1
       if i % chunk_size == 0
         deleted_ids.save
-        i = 0
       end
     end
     puts
     draw_progress(1)
+    
+    deleted_ids.save
   end
 end
 
