@@ -57,16 +57,28 @@ def list_tweets(tweets)
   end
 end
 
-
-def load_from_archive(path)
+def load_from_archive(path, prefix)
   data = IO.read(path)
   
-  unless data.gsub!(%r{^window\.YTD\.tweet\.part0 = }, '')
+  unless data.gsub!(%r{^window\.YTD\.#{Regexp.escape(prefix)}\.part0 = }, '')
     raise "Unexpected start of archive data"
   end
 
+  JSON.parse(data)
+end
+
+def load_likes_from_archive(path)
+  path = File.join(path, 'data', 'like.js')
+  load_from_archive(path, 'like').map do |datum|
+    datum['like']
+  end
+end
+
+def load_tweets_from_archive(path)
+  path = File.join(path, 'data', 'tweet.js')
+
   Hash.new.tap do |all_tweets|
-    JSON.parse(data).each do |datum|
+    load_from_archive(path, 'tweet').each do |datum|
       tweet = datum['tweet']
 
       id = tweet['id_str']
@@ -78,7 +90,7 @@ end
 def load_tweets(user, resume, archive_path)
   unless archive_path.nil?
     puts 'loading from archive'
-    return load_from_archive(archive_path)
+    return load_tweets_from_archive(archive_path)
   end
 
   if resume
@@ -137,18 +149,23 @@ def setup_next_progress_draw
   print ansi_clear_line
 end
 
-def unlike_all(user)
+def unlike_all(user, archive_path)
   while true
     puts
     print 'fetching likes...'
-    likes = user_likes(user)
+    likes = if archive_path.nil?
+      user_likes(user)
+    else
+      print ' (from archive) '
+      load_likes_from_archive(archive_path)
+    end
     puts " (#{likes.size})"
     
     break if likes.empty?
 
     likes.each_with_index do |tweet, i|
-      txt = tweet['text']
-      id = tweet['id_str']
+      txt = tweet['text'] || tweet['fullText']
+      id = tweet['id_str'] || tweet['tweetId']
       max = likes.size.to_f
 
       draw_tweet_and_progress(txt, i, max)
@@ -213,16 +230,17 @@ resume = options[:resume]
 only_rt_and_mentions = options[:rt_and_mentions]
 older_days = options[:older_days]
 chunk_size = 100
+archive_path = options[:archive]
 
 
-unlike_all(user) if confirm('delete likes')
+unlike_all(user, archive_path) if confirm('delete likes')
   
 
 puts
 puts '-'*60
 puts "fetching tweets to delete"
 
-all_tweets = load_tweets(user, resume, options[:archive])
+all_tweets = load_tweets(user, resume, archive_path)
 
 ids_to_remove = []
 all_tweets.each do |id, tweet|
