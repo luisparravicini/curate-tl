@@ -195,8 +195,12 @@ OptionParser.new do |opts|
     options[:rt_and_mentions] = true
   end
 
-  opts.on("-a=PATH", "--archive=PATH", "Read tweets from a Twitter archive for the user") do |path|
+  opts.on("-a", "--archive PATH", "Read tweets from a Twitter archive for the user") do |path|
     options[:archive] = path
+  end
+
+  opts.on("-o", "--older DAYS", Integer, "Only evaluates tweets older than x days") do |days|
+    options[:older_days] = days
   end
 
   opts.on("-h", "--help", "Prints this help") do
@@ -207,6 +211,7 @@ end.parse!
 
 resume = options[:resume]
 only_rt_and_mentions = options[:rt_and_mentions]
+older_days = options[:older_days]
 chunk_size = 100
 
 
@@ -259,6 +264,14 @@ all_tweets.each do |id, tweet|
 
   if conf[:safe_prefix].any? { |x| txt.start_with?(x) }
     delete = false
+  end
+
+  unless older_days.nil?
+    created = Date.parse(tweet['created_at'])
+    days_old = (Date.today() - created).to_i
+    if days_old <= older_days
+      delete = false
+    end
   end
 
   if delete
