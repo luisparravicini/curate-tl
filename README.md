@@ -12,4 +12,8 @@ After having twurl running, copy `demo-conf.yaml` to `conf.yaml` and edit it wit
  * Retrieves all the tweets it can, it stores them in `tweets.json`
  * It lists tweets that match the criteria for deletion and asks if you want to proceed. After removing them, it continues with the next batch.
 
+
+ It accepts the following parameters:
+
+ `-c` It reads the tweets from the local cache (`tweets.json`) instead of retrieving them with the api
  
