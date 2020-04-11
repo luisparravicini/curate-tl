@@ -6,6 +6,7 @@ require 'date'
 require 'set'
 require 'uri'
 require 'yaml'
+require 'optparse'
 
 
 TWEETS_FNAME = 'tweets.json'
@@ -155,7 +156,22 @@ conf = YAML.load(IO.read('conf.yaml'))
 user = conf[:username]
 puts "user: #{user}"
 
-resume = ARGV.shift == '-c'
+
+options = {}
+OptionParser.new do |opts|
+  opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
+
+  opts.on("-r", "--resume", "Resume deletion using local cache") do
+    options[:resume] = true
+  end
+
+  opts.on("-h", "--help", "Prints this help") do
+    puts opts
+    exit
+  end
+end.parse!
+
+resume = options[:resume]
 only_rt_and_mentions = false
 chunk_size = 100
 
