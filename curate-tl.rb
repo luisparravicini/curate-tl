@@ -287,7 +287,8 @@ DELETED_FNAME = 'deleted_ids.json'
 $stdout.sync = true
 
 return if ids_to_remove.empty?
-deleted_ids = if resume && File.exist?(DELETED_FNAME)
+from_archive = !options[:archive].nil?
+deleted_ids = if (resume || from_archive) && File.exist?(DELETED_FNAME)
   Set.new(JSON.parse(IO.read(DELETED_FNAME)))
 else
   Set.new
