@@ -123,7 +123,7 @@ end
 
 
 def draw_progress(progress)
-  max_progress_size = 20
+  max_progress_size = 40
   size = (max_progress_size * progress).to_i
   print '['
   print "\u2588" * size
@@ -183,7 +183,7 @@ def unlike_all(user, archive_path, deleted_ids, chunk_size)
     end
     puts
     draw_progress(1)
-    
+
     deleted_ids.save
   end
 end
