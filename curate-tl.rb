@@ -165,6 +165,10 @@ OptionParser.new do |opts|
     options[:resume] = true
   end
 
+  opts.on("-m", nil, "Only delete RTs and tweets starting with a username") do
+    options[:rt_and_mentions] = true
+  end
+
   opts.on("-h", "--help", "Prints this help") do
     puts opts
     exit
@@ -172,7 +176,7 @@ OptionParser.new do |opts|
 end.parse!
 
 resume = options[:resume]
-only_rt_and_mentions = false
+only_rt_and_mentions = options[:rt_and_mentions]
 chunk_size = 100
 
 

@@ -16,3 +16,5 @@ After having twurl running, copy `demo-conf.yaml` to `conf.yaml` and edit it wit
  It accepts the following parameters:
 
  `-r` / `--resume` Reads the tweets from the local cache (`tweets.json`) instead of retrieving them with the api
+
+`-m` Only deletes tweets that are RTs and start mentioning a username
