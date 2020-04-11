@@ -341,34 +341,36 @@ end
 $stdout.sync = true
 
 return if ids_to_remove.empty?
-ids_to_remove.each_slice(chunk_size) do |ids|
-  ids.delete_if { |x| deleted_ids.include?(x[:id]) }
-  next if ids.empty?
+ids_to_remove.
+  delete_if { |x| deleted_ids.include?(x[:id]) }.
+  each_slice(chunk_size) do |ids|
+    
+    next if ids.empty?
 
-  puts '-'*60
-  puts
+    puts '-'*60
+    puts
 
-  list_tweets(ids)
+    list_tweets(ids)
 
-  next unless confirm('delete them all')
+    next unless confirm('delete them all')
 
-  puts '-'*60
-  ids.each_with_index do |datum, i|
-    txt = datum[:txt]
-    id = datum[:id]
-    max = ids.size.to_f
+    puts '-'*60
+    ids.each_with_index do |datum, i|
+      txt = datum[:txt]
+      id = datum[:id]
+      max = ids.size.to_f
 
-    draw_tweet_and_progress(txt, i, max)
+      draw_tweet_and_progress(txt, i, max)
 
-    remove_status(id)
-    deleted_ids.add(id)
+      remove_status(id)
+      deleted_ids.add(id)
 
-    setup_next_progress_draw
-  end
-  puts
-  draw_progress(1)
+      setup_next_progress_draw
+    end
+    puts
+    draw_progress(1)
 
-  deleted_ids.save
+    deleted_ids.save
 
-  puts
+    puts
 end
