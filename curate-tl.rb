@@ -149,12 +149,14 @@ def setup_next_progress_draw
 end
 
 def unlike_all(user, archive_path, deleted_ids, chunk_size)
-  while true
+  has_data = true
+  while has_data
     puts
     print 'fetching likes...'
     likes = if archive_path.nil?
       user_likes(user)
     else
+      has_data = false
       print ' (from archive) '
       load_likes_from_archive(archive_path)
     end
