@@ -58,7 +58,29 @@ def list_tweets(tweets)
 end
 
 
-def load_tweets(user, resume)
+def load_from_archive(path)
+  data = IO.read(path)
+  
+  unless data.gsub!(%r{^window\.YTD\.tweet\.part0 = }, '')
+    raise "Unexpected start of archive data"
+  end
+
+  Hash.new.tap do |all_tweets|
+    JSON.parse(data).each do |datum|
+      tweet = datum['tweet']
+
+      id = tweet['id_str']
+      all_tweets[id] = tweet
+    end
+  end
+end
+
+def load_tweets(user, resume, archive_path)
+  unless archive_path.nil?
+    puts 'loading from archive'
+    return load_from_archive(archive_path)
+  end
+
   if resume
     puts 'loading from cache'
     return JSON.parse(IO.read(TWEETS_FNAME))
@@ -169,6 +191,14 @@ OptionParser.new do |opts|
     options[:rt_and_mentions] = true
   end
 
+  opts.on("-m", nil, "Only delete RTs and tweets starting with a username") do
+    options[:rt_and_mentions] = true
+  end
+
+  opts.on("-a=PATH", "--archive=PATH", "Read tweets from a Twitter archive for the user") do |path|
+    options[:archive] = path
+  end
+
   opts.on("-h", "--help", "Prints this help") do
     puts opts
     exit
@@ -186,13 +216,12 @@ unlike_all(user) if confirm('delete likes')
 puts
 puts '-'*60
 puts "fetching tweets to delete"
-puts '-'*60
 
-all_tweets = load_tweets(user, resume)
+all_tweets = load_tweets(user, resume, options[:archive])
 
 ids_to_remove = []
 all_tweets.each do |id, tweet|
-  txt = tweet['text']
+  txt = tweet['text'] || tweet['full_text']
 
   delete = false
 
