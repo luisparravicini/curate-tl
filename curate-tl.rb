@@ -149,7 +149,7 @@ def setup_next_progress_draw
   print ansi_clear_line
 end
 
-def unlike_all(user, archive_path)
+def unlike_all(user, archive_path, deleted_ids, chunk_size)
   while true
     puts
     print 'fetching likes...'
@@ -160,9 +160,10 @@ def unlike_all(user, archive_path)
       load_likes_from_archive(archive_path)
     end
     puts " (#{likes.size})"
-    
+
     break if likes.empty?
 
+    i = 0
     likes.each_with_index do |tweet, i|
       txt = tweet['text'] || tweet['fullText']
       id = tweet['id_str'] || tweet['tweetId']
@@ -170,9 +171,18 @@ def unlike_all(user, archive_path)
 
       draw_tweet_and_progress(txt, i, max)
 
-      unlike(id)
+      unless deleted_ids.include?(id)
+        unlike(id)
+        deleted_ids.add(id)
+      end
 
       setup_next_progress_draw
+
+      i += 1
+      if i % chunk_size == 0
+        deleted_ids.save
+        i = 0
+      end
     end
     puts
     draw_progress(1)
@@ -188,6 +198,31 @@ def confirm(msg)
   puts
 
   (answer == 'y')
+end
+
+
+class DeletedIds
+  FNAME = 'deleted_ids.json'
+
+  def initialize(enabled)
+    @data = if enabled && File.exist?(FNAME)
+      Set.new(JSON.parse(IO.read(FNAME)))
+    else
+      Set.new
+    end
+  end
+
+  def include?(x)
+    @data.include?(x)
+  end
+
+  def add(x)
+    @data << x
+  end
+
+  def save
+    File.write(FNAME, JSON.dump(@data.to_a))
+  end
 end
 
 
@@ -232,8 +267,11 @@ older_days = options[:older_days]
 chunk_size = 100
 archive_path = options[:archive]
 
+from_archive = !options[:archive].nil?
+deleted_ids = DeletedIds.new(resume || from_archive)
 
-unlike_all(user, archive_path) if confirm('delete likes')
+
+unlike_all(user, archive_path, deleted_ids, chunk_size) if confirm('delete likes')
   
 
 puts
@@ -301,16 +339,9 @@ all_tweets.each do |id, tweet|
   end
 end
 
-DELETED_FNAME = 'deleted_ids.json'
 $stdout.sync = true
 
 return if ids_to_remove.empty?
-from_archive = !options[:archive].nil?
-deleted_ids = if (resume || from_archive) && File.exist?(DELETED_FNAME)
-  Set.new(JSON.parse(IO.read(DELETED_FNAME)))
-else
-  Set.new
-end
 ids_to_remove.each_slice(chunk_size) do |ids|
   ids.delete_if { |x| deleted_ids.include?(x[:id]) }
   next if ids.empty?
@@ -331,14 +362,14 @@ ids_to_remove.each_slice(chunk_size) do |ids|
     draw_tweet_and_progress(txt, i, max)
 
     remove_status(id)
-    deleted_ids << id
+    deleted_ids.add(id)
 
     setup_next_progress_draw
   end
   puts
   draw_progress(1)
 
-  File.write(DELETED_FNAME, JSON.dump(deleted_ids.to_a))
+  deleted_ids.save
 
   puts
 end
