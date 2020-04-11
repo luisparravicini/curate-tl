@@ -1,0 +1,14 @@
+---
+:username: your-twitter-username
+:safe_hashtags:
+  - python
+  - gamedev
+  - indiedev
+  - procgen
+:safe_text:
+  - some text 
+:safe_ids:
+  - 'tweet-id-1'
+  - 'tweet-id-2'
+:safe_prefix:
+  - tweets starting with this are not deleted
