@@ -8,12 +8,12 @@ require 'uri'
 require 'yaml'
 require 'optparse'
 
-
-TWEETS_FNAME = 'tweets.json'
+TWEETS_FNAME = 'tweets.json'.freeze
 
 def exec(cmd)
   out = `twurl #{cmd}`
   raise "error: #{out}" unless $CHILD_STATUS.success?
+
   out
 end
 
@@ -32,7 +32,6 @@ end
 def unlike(id)
   exec("-X POST /1.1/favorites/destroy.json?id=#{id}")
 end
-
 
 def user_timeline(user, max_id)
   args = {
@@ -59,9 +58,9 @@ end
 
 def load_from_archive(path, prefix)
   data = IO.read(path)
-  
+
   unless data.gsub!(%r{^window\.YTD\.#{Regexp.escape(prefix)}\.part0 = }, '')
-    raise "Unexpected start of archive data"
+    raise 'Unexpected start of archive data'
   end
 
   JSON.parse(data)
@@ -114,7 +113,7 @@ def load_tweets(user, resume, archive_path)
         id = tweet['id_str']
         all_tweets[id] = tweet
       end
-      oldest_tweet = tweets.sort_by { |x| x['id'] }.first
+      oldest_tweet = tweets.min_by { |x| x['id'] }
     end
 
     IO.write(TWEETS_FNAME, JSON.dump(all_tweets))
@@ -177,9 +176,7 @@ def unlike_all(user, archive_path, deleted_ids, chunk_size)
 
       setup_next_progress_draw
 
-      if i % chunk_size == 0
-        deleted_ids.save
-      end
+      deleted_ids.save if (i % chunk_size).zero?
     end
     puts
     draw_progress(1)
@@ -188,10 +185,9 @@ def unlike_all(user, archive_path, deleted_ids, chunk_size)
   end
 end
 
-
 def confirm(msg)
   puts
-  puts '-'*60
+  puts '-' * 60
   print "#{msg}? [y/N] "
   answer = $stdin.readline.strip
   puts
@@ -201,7 +197,7 @@ end
 
 
 class DeletedIds
-  FNAME = 'deleted_ids.json'
+  FNAME = 'deleted_ids.json'.freeze
 
   def initialize(enabled)
     @data = if enabled && File.exist?(FNAME)
@@ -234,27 +230,23 @@ options = {}
 OptionParser.new do |opts|
   opts.banner = "Usage: #{$PROGRAM_NAME} [options]"
 
-  opts.on("-r", "--resume", "Resume deletion using local cache") do
+  opts.on('-r', '--resume', 'Resume deletion using local cache') do
     options[:resume] = true
   end
 
-  opts.on("-m", nil, "Only delete RTs and tweets starting with a username") do
+  opts.on('-m', nil, 'Only delete RTs and tweets starting with a username') do
     options[:rt_and_mentions] = true
   end
 
-  opts.on("-m", nil, "Only delete RTs and tweets starting with a username") do
-    options[:rt_and_mentions] = true
-  end
-
-  opts.on("-a", "--archive PATH", "Read tweets from a Twitter archive for the user") do |path|
+  opts.on('-a', '--archive PATH', 'Read tweets from a Twitter archive for the user') do |path|
     options[:archive] = path
   end
 
-  opts.on("-o", "--older DAYS", Integer, "Only evaluates tweets older than x days") do |days|
+  opts.on('-o', '--older DAYS', Integer, 'Only evaluates tweets older than x days') do |days|
     options[:older_days] = days
   end
 
-  opts.on("-h", "--help", "Prints this help") do
+  opts.on('-h', '--help', 'Prints this help') do
     puts opts
     exit
   end
@@ -270,12 +262,14 @@ from_archive = !options[:archive].nil?
 deleted_ids = DeletedIds.new(resume || from_archive)
 
 
-unlike_all(user, archive_path, deleted_ids, chunk_size) if confirm('delete likes')
+if confirm('delete likes')
+  unlike_all(user, archive_path, deleted_ids, chunk_size)
+end
   
 
 puts
-puts '-'*60
-puts "fetching tweets to delete"
+puts '-' * 60
+puts 'fetching tweets to delete'
 
 all_tweets = load_tweets(user, resume, archive_path)
 
@@ -285,7 +279,7 @@ all_tweets.each do |id, tweet|
 
   delete = false
 
-  unless only_rt_and_mentions 
+  unless only_rt_and_mentions
     delete = true
 
     hashtags = tweet['entities']['hashtags'].map { |x| x['text'] }
@@ -305,7 +299,7 @@ all_tweets.each do |id, tweet|
       replied_id = tweet['in_reply_to_status_id_str']
       # it might happen that this is a reply to a tweet we haven't
       # got loaded
-      if all_tweets.has_key?(replied_id)
+      if all_tweets.key?(replied_id)
         delete = false
       end
     end
@@ -314,8 +308,8 @@ all_tweets.each do |id, tweet|
   if txt.start_with?('@') ||
      txt.start_with?('RT') ||
      txt.start_with?('.@')
-        delete = true
-  end     
+    delete = true
+  end
 
   if conf[:safe_prefix].any? { |x| txt.start_with?(x) }
     delete = false
@@ -323,38 +317,39 @@ all_tweets.each do |id, tweet|
 
   unless older_days.nil?
     created = Date.parse(tweet['created_at'])
-    days_old = (Date.today() - created).to_i
+    days_old = (Date.today - created).to_i
     if days_old <= older_days
       delete = false
     end
   end
 
-  if delete
-    ids_to_remove << {
-      id: id,
-      txt: txt,
-      tweet: tweet
-    }
-  end
+  next unless delete
+
+  ids_to_remove << {
+    id: id,
+    txt: txt,
+    tweet: tweet
+  }
 end
 
 $stdout.sync = true
 
 return if ids_to_remove.empty?
-ids_to_remove.
-  delete_if { |x| deleted_ids.include?(x[:id]) }.
-  each_slice(chunk_size) do |ids|
+
+ids_to_remove
+  .delete_if { |x| deleted_ids.include?(x[:id]) }
+  .each_slice(chunk_size) do |ids|
     
     next if ids.empty?
 
-    puts '-'*60
+    puts '-' * 60
     puts
 
     list_tweets(ids)
 
     next unless confirm('delete them all')
 
-    puts '-'*60
+    puts '-' * 60
     ids.each_with_index do |datum, i|
       txt = datum[:txt]
       id = datum[:id]
