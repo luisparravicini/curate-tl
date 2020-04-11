@@ -59,7 +59,7 @@ end
 def load_from_archive(path, prefix)
   data = IO.read(path)
 
-  unless data.gsub!(%r{^window\.YTD\.#{Regexp.escape(prefix)}\.part0 = }, '')
+  if data.delete_prefix!("window.YTD.#{prefix}.part0 = ").nil?
     raise 'Unexpected start of archive data'
   end
 
