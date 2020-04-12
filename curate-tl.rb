@@ -38,11 +38,10 @@ def user_timeline(user, max_id)
     screen_name: user,
     count: 200,
     # trim_user: true,
-    include_rts: true
+    include_rts: true,
+    tweet_mode: 'extended'
   }
-  unless max_id.nil?
-    args[:max_id] = max_id
-  end
+  args[:max_id] = max_id unless max_id.nil?
   args_str = URI.encode_www_form(args)
 
   json(exec("'/1.1/statuses/user_timeline.json?#{args_str}'"))
@@ -196,7 +195,6 @@ def confirm(msg)
 
   (answer == 'y')
 end
-
 
 class DeletedIds
   FNAME = 'deleted_ids.json'.freeze
