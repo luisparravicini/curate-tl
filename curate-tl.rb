@@ -17,8 +17,8 @@ def exec(cmd)
   out
 end
 
-def json(s)
-  JSON.parse(s)
+def json(str)
+  JSON.parse(str)
 end
 
 def remove_status(id)
@@ -75,7 +75,7 @@ end
 def load_tweets_from_archive(path)
   path = File.join(path, 'data', 'tweet.js')
 
-  Hash.new.tap do |all_tweets|
+  {}.tap do |all_tweets|
     load_from_archive(path, 'tweet').each do |datum|
       tweet = datum['tweet']
 
@@ -96,7 +96,7 @@ def load_tweets(user, resume, archive_path)
     return JSON.parse(IO.read(TWEETS_FNAME))
   end
 
-  Hash.new.tap do |all_tweets|
+  {}.tap do |all_tweets|
     last_oldest_tweet = nil
     oldest_tweet = {}
 
@@ -118,7 +118,6 @@ def load_tweets(user, resume, archive_path)
     IO.write(TWEETS_FNAME, JSON.dump(all_tweets))
   end
 end
-
 
 def draw_progress(progress)
   max_progress_size = 40
@@ -220,11 +219,9 @@ class DeletedIds
   end
 end
 
-
 conf = YAML.load(IO.read('conf.yaml'))
 user = conf[:username]
 puts "user: #{user}"
-
 
 options = {}
 OptionParser.new do |opts|
@@ -260,7 +257,6 @@ archive_path = options[:archive]
 
 from_archive = !options[:archive].nil?
 deleted_ids = DeletedIds.new(resume || from_archive)
-
 
 if confirm('delete likes')
   unlike_all(user, archive_path, deleted_ids, chunk_size)
@@ -339,7 +335,7 @@ return if ids_to_remove.empty?
 ids_to_remove
   .delete_if { |x| deleted_ids.include?(x[:id]) }
   .each_slice(chunk_size) do |ids|
-    
+
     next if ids.empty?
 
     puts '-' * 60
