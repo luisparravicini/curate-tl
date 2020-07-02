@@ -267,7 +267,6 @@ if confirm('delete likes')
   unlike_all(user, archive_path, deleted_ids, chunk_size)
 end
 
-
 puts
 puts '-' * 60
 puts 'fetching tweets to delete'
