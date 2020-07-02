@@ -152,12 +152,12 @@ def unlike_all(user, archive_path, deleted_ids, chunk_size)
     puts
     print 'fetching likes...'
     likes = if archive_path.nil?
-      user_likes(user)
-    else
-      has_data = false
-      print ' (from archive) '
-      load_likes_from_archive(archive_path)
-    end
+              user_likes(user)
+            else
+              has_data = false
+              print ' (from archive) '
+              load_likes_from_archive(archive_path)
+            end
     puts " (#{likes.size})"
 
     break if likes.empty?
@@ -200,10 +200,10 @@ class DeletedIds
 
   def initialize(enabled)
     @data = if enabled && File.exist?(FNAME)
-      Set.new(JSON.parse(IO.read(FNAME)))
-    else
-      Set.new
-    end
+              Set.new(JSON.parse(IO.read(FNAME)))
+            else
+              Set.new
+            end
   end
 
   def include?(x)
@@ -266,7 +266,7 @@ deleted_ids = DeletedIds.new(resume || from_archive)
 if confirm('delete likes')
   unlike_all(user, archive_path, deleted_ids, chunk_size)
 end
-  
+
 
 puts
 puts '-' * 60
@@ -292,10 +292,6 @@ all_tweets.each do |id, tweet|
       delete = false
     end
 
-    if conf[:safe_ids].include?(id)
-      delete = false
-    end
-
     if tweet['in_reply_to_screen_name'] == user
       replied_id = tweet['in_reply_to_status_id_str']
       # it might happen that this is a reply to a tweet we haven't
@@ -316,6 +312,10 @@ all_tweets.each do |id, tweet|
   end
 
   if conf[:safe_prefix].any? { |x| txt.start_with?(x) }
+    delete = false
+  end
+
+  if conf[:safe_ids].include?(id)
     delete = false
   end
 
@@ -343,7 +343,6 @@ return if ids_to_remove.empty?
 ids_to_remove
   .delete_if { |x| deleted_ids.include?(x[:id]) }
   .each_slice(chunk_size) do |ids|
-
     next if ids.empty?
 
     puts '-' * 60
