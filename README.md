@@ -17,7 +17,9 @@ After having twurl running, copy `demo-conf.yaml` to `conf.yaml` and edit it wit
 
  `-r` / `--resume` Reads the tweets from the local cache (`tweets.json`) instead of retrieving them with the api
 
-`-m` Only deletes tweets that are RTs or start mentioning a username
+`-R` Only deletes RTs
+
+`-m` Only deletes tweets that start mentioning a username
 
 `-a PATH` Reads tweets and likes from the [archive downloaded from Twitter](https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive). Sometimes, the api doesn't return all the old tweets, so this is a way to access those old tweets. Use the path where the zip was decompressed.
 

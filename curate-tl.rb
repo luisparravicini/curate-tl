@@ -231,8 +231,12 @@ OptionParser.new do |opts|
     options[:resume] = true
   end
 
-  opts.on('-m', nil, 'Only delete RTs and tweets starting with a username') do
-    options[:rt_and_mentions] = true
+  opts.on('-R', nil, 'Only delete RTs') do
+    options[:rt] = true
+  end
+
+  opts.on('-m', nil, 'Only delete tweets starting with a username') do
+    options[:mentions] = true
   end
 
   opts.on('-a', '--archive PATH', 'Read tweets from a Twitter archive for the user') do |path|
@@ -250,7 +254,8 @@ OptionParser.new do |opts|
 end.parse!
 
 resume = options[:resume]
-only_rt_and_mentions = options[:rt_and_mentions]
+only_mentions = options[:mentions]
+only_rt = options[:rt]
 older_days = options[:older_days]
 chunk_size = 100
 archive_path = options[:archive]
@@ -275,7 +280,7 @@ all_tweets.each do |id, tweet|
 
   delete = false
 
-  unless only_rt_and_mentions
+  unless only_rt || only_mentions
     delete = true
 
     hashtags = tweet['entities']['hashtags'].map { |x| x['text'] }
@@ -301,9 +306,12 @@ all_tweets.each do |id, tweet|
     end
   end
 
-  if txt.start_with?('@') ||
-     txt.start_with?('RT') ||
-     txt.start_with?('.@')
+  if only_rt && txt.start_with?('RT')
+    delete = true
+  end
+
+  if only_mentions && (txt.start_with?('@') ||
+     txt.start_with?('.@'))
     delete = true
   end
 
