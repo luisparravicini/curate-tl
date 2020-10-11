@@ -28,7 +28,7 @@ def exec_check_errors(cmd)
 end
 
 def remove_status(id)
-  exec_check_errors("-X POST /1.1/statuses/destroy/#{id}.json")
+  exec_check_errors("-d 'id=#{id}' /1.1/statuses/destroy/#{id}.json")
 end
 
 def user_likes(user)
