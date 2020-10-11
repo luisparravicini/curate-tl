@@ -11,18 +11,24 @@ require 'optparse'
 TWEETS_FNAME = 'tweets.json'.freeze
 
 def exec(cmd)
-  out = `twurl #{cmd}`
-  raise "error: #{out}" unless $CHILD_STATUS.success?
-
-  out
+  `twurl #{cmd}`.tap do |out|
+    raise "error: #{out}" unless $CHILD_STATUS.success?
+  end
 end
 
 def json(str)
   JSON.parse(str)
 end
 
+def exec_check_errors(cmd)
+  json(exec(cmd)).tap do |out|
+    errors = out['errors']
+    raise "error: #{errors}" unless errors.nil?
+  end
+end
+
 def remove_status(id)
-  exec("-X POST /1.1/statuses/destroy/#{id}.json")
+  exec_check_errors("-X POST /1.1/statuses/destroy/#{id}.json")
 end
 
 def user_likes(user)
@@ -30,7 +36,7 @@ def user_likes(user)
 end
 
 def unlike(id)
-  exec("-X POST /1.1/favorites/destroy.json?id=#{id}")
+  exec_check_errors("-d 'id=#{id}' /1.1/favorites/destroy.json")
 end
 
 def user_timeline(user, max_id)
