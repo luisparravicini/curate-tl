@@ -152,7 +152,7 @@ def setup_next_progress_draw
   print ansi_clear_line
 end
 
-def unlike_all(user, archive_path, deleted_ids, chunk_size)
+def unlike_all(user, archive_path, deleted_ids, chunk_size, older_days)
   has_data = true
   while has_data
     puts
@@ -164,9 +164,24 @@ def unlike_all(user, archive_path, deleted_ids, chunk_size)
               print ' (from archive) '
               load_likes_from_archive(archive_path)
             end
+
+    unless older_days.nil?
+      likes.delete_if do |tweet|
+        # This is the created date for the liked tweet
+        # There's no timestamp for the like action so this is the
+        # closest in terms of removing likes and leaving only
+        # some "new" ones
+        created = Date.parse(tweet['created_at'])
+        days_old = (Date.today - created).to_i
+
+        days_old > older_days
+      end
+    end
+
     puts " (#{likes.size})"
 
     break if likes.empty?
+    return unless confirm('are you sure you want to delete them')
 
     likes.each_with_index do |tweet, i|
       txt = tweet['text'] || tweet['fullText']
@@ -270,7 +285,7 @@ from_archive = !options[:archive].nil?
 deleted_ids = DeletedIds.new(resume || from_archive)
 
 if confirm('delete likes')
-  unlike_all(user, archive_path, deleted_ids, chunk_size)
+  unlike_all(user, archive_path, deleted_ids, chunk_size, older_days)
 end
 
 puts
