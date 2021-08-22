@@ -24,3 +24,7 @@ After having twurl running, copy `demo-conf.yaml` to `conf.yaml` and edit it wit
 `-a PATH` Reads tweets and likes from the [archive downloaded from Twitter](https://help.twitter.com/en/managing-your-account/how-to-download-your-twitter-archive). Sometimes, the api doesn't return all the old tweets, so this is a way to access those old tweets. Use the path where the zip was decompressed.
 
 `-o days` Only evaluate tweets older (in days) than the value specified.
+
+## last tweets
+
+`last_tweet.rb` fetches the list of users the current user (the one you logged in with _twurl_) is following and then list the date of the last tweet/RT made.
