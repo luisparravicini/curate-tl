@@ -38,8 +38,8 @@ def fetch_friends
   friends = []
   cursor = -1
   while true do
-    puts "fetching friends with cursor #{cursor}"
-    result = fetch_friends(cursor)
+    puts "fetching friends [#{friends.size}]"
+    result = api_fetch_friends(cursor)
     friends += result['users']
     next_cursor = result['next_cursor']
     break if next_cursor == 0
