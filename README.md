@@ -28,3 +28,5 @@ After having twurl running, copy `demo-conf.yaml` to `conf.yaml` and edit it wit
 ## last tweets
 
 `last_tweet.rb` fetches the list of users the current user (the one you logged in with _twurl_) is following and then list the date of the last tweet/RT made.
+Once the list of users is fetched, it's stored in _friends.json_ as a cache, if you want to fetch it again, delete that file.
+
