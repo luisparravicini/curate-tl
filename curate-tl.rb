@@ -216,6 +216,12 @@ def confirm(msg)
   (answer == 'y')
 end
 
+
+def is_rt?(txt)
+  txt.start_with?('RT')
+end
+
+
 class DeletedIds
   FNAME = 'deleted_ids.json'.freeze
 
@@ -304,11 +310,11 @@ all_tweets.each do |id, tweet|
     delete = true
 
     hashtags = tweet['entities']['hashtags'].map { |x| x['text'] }
-    if hashtags.any? { |x| conf[:safe_hashtags].include?(x) }
+    if !is_rt?(txt) && hashtags.any? { |x| conf[:safe_hashtags].include?(x) }
       delete = false
     end
 
-    if conf[:safe_text].any? { |x| txt.downcase.include?(x) }
+    if !is_rt?(txt) && conf[:safe_text].any? { |x| txt.downcase.include?(x) }
       delete = false
     end
 
@@ -322,7 +328,7 @@ all_tweets.each do |id, tweet|
     end
   end
 
-  if only_rt && txt.start_with?('RT')
+  if only_rt && is_rt?(txt)
     delete = true
   end
 
